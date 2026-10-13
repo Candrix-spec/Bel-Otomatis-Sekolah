@@ -1,0 +1,16 @@
+# Data operasional — tidak ikut di-upload (dibuat otomatis saat server jalan)
+data/config.json
+data/power.json
+data/announcements.json
+data/audio/*
+!data/audio/.gitkeep
+
+# Jejak agen daya di PC bel
+agen-pc-bel/agen.log
+agen-pc-bel/agen-cache.json
+agen-pc-bel/__pycache__/
+
+# Rahasia & lokal
+.env
+*.log
+.DS_Store

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bel Sekolah Otomatis</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b3b8f">
+<style>
+:root{--blue:#0b3b8f;--blue2:#1565d8;--bg:#071733;--card:#0e2450;--line:#24457f;--txt:#eef3ff;--mut:#9db4dd;--ok:#22c55e;--warn:#f59e0b;--red:#ef4444}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:radial-gradient(1200px 600px at 70% -10%,#174a9e33,transparent),var(--bg);color:var(--txt)}
+header{padding:18px 22px 6px;text-align:center}
+.school{font-size:clamp(22px,4vw,40px);font-weight:800;letter-spacing:.3px}
+.motto{color:var(--mut);margin-top:2px}
+.statusbar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0 4px}
+.pill{border:1px solid var(--line);background:var(--card);padding:5px 12px;border-radius:999px;font-size:13px}
+.pill .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ok);margin-right:6px}
+.pill.off .dot{background:var(--red)} .pill.warnp .dot{background:var(--warn)}
+main{max-width:980px;margin:0 auto;padding:10px 16px 40px}
+.clock{text-align:center;font-size:clamp(56px,13vw,120px);font-weight:800;font-variant-numeric:tabular-nums;line-height:1;margin:8px 0 0}
+.date{text-align:center;color:var(--mut);font-size:clamp(15px,2.4vw,20px)}
+.next{margin:18px auto;max-width:640px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center}
+.next b{font-size:20px}.cd{font-size:30px;font-weight:800;color:#7db4ff;font-variant-numeric:tabular-nums}
+.nowplay{display:none;margin:10px auto;max-width:640px;background:#123064;border:1px solid var(--blue2);border-radius:12px;padding:10px 14px;text-align:center}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}@media(min-width:760px){.grid{grid-template-columns:1.2fr .8fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card h3{margin:0 0 10px}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+tr.passed{opacity:.45}tr.nextrow{background:#1565d822}tr.firing{background:#f59e0b33}
+button{background:var(--blue2);color:#fff;border:0;border-radius:10px;padding:9px 14px;cursor:pointer;font-size:14px}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt)}
+button.danger{background:var(--red)}button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,select{background:#081a3d;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:14px}
+input[type=range]{padding:0}label{font-size:13px;color:var(--mut)}
+dialog{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:16px;max-width:860px;width:94vw;max-height:88vh;overflow:auto}
+dialog::backdrop{background:#000a}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.tabs button.on{background:#fff;color:#0b3b8f;font-weight:700}
+.sec{display:none}.sec.on{display:block}
+.daybox{display:flex;gap:4px}.daybox button{padding:4px 8px;border-radius:7px;background:#081a3d;border:1px solid var(--line);color:var(--mut)}.daybox button.on{background:var(--blue2);color:#fff}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#0f2b5e;border:1px solid var(--blue2);padding:11px 18px;border-radius:12px;display:none;z-index:50;max-width:92vw;text-align:center}
+#annBanner{position:fixed;inset:0;background:#7c2d12f2;display:none;align-items:center;justify-content:center;z-index:80;text-align:center;padding:24px}
+#annBanner .big{font-size:clamp(26px,5.4vw,54px);font-weight:800;line-height:1.25;max-width:1000px}
+#annBanner .lbl{font-size:clamp(15px,2.4vw,22px);letter-spacing:3px;color:#fdba74;margin-bottom:14px}
+#powerBanner{position:fixed;inset:0;background:#450a0af5;display:none;align-items:center;justify-content:center;z-index:85;text-align:center;padding:24px}
+#powerBanner .big{font-size:clamp(30px,6vw,64px);font-weight:800;line-height:1.2}
+#powerBanner .lbl{font-size:clamp(15px,2.4vw,22px);letter-spacing:3px;color:#fca5a5;margin-bottom:14px}
+#unlock{position:fixed;inset:0;background:#020817ee;display:flex;align-items:center;justify-content:center;z-index:99;text-align:center;padding:20px}
+#unlock .box{max-width:480px}#unlock button{font-size:19px;padding:16px 26px;border-radius:14px}
+small{color:var(--mut)}
+</style>
+</head>
+<body>
+<div id="unlock"><div class="box">
+  <div style="font-size:44px">🔔</div>
+  <h2>Aktifkan Bel Sekolah</h2>
+  <p>Browser wajib diklik sekali supaya audio boleh bunyi otomatis.<br>Setelah itu biarkan halaman ini terbuka di PC bel.</p>
+  <button id="btnUnlock">▶ Aktifkan &amp; Mulai</button>
+  <p><small>Tips: sambungkan PC ke speaker/amplifier sekolah, aktifkan mode layar penuh (tombol di bawah jam).</small></p>
+</div></div>
+
+<header>
+  <div class="school" id="schoolName">Bel Sekolah</div>
+  <div class="motto" id="schoolMotto"></div>
+  <div class="statusbar">
+    <span class="pill" id="pillNet"><span class="dot"></span><span id="netTxt">Memeriksa koneksi…</span></span>
+    <span class="pill"><span id="syncTxt">Config: lokal</span></span>
+    <span class="pill">📂 Kategori: <span id="profileTxt">-</span></span>
+    <span class="pill">🔊 Volume: <span id="volTxt">-</span></span>
+  </div>
+</header>
+<main>
+  <div class="clock" id="clock">--:--:--</div>
+  <div class="date" id="dateTxt"></div>
+  <div class="nowplay" id="nowPlay"></div>
+  <div class="next"><div>Bel berikutnya</div><b id="nextName">—</b><div class="cd" id="nextCd">--:--:--</div><div><small id="nextTime"></small></div></div>
+  <div class="grid">
+    <div class="card"><h3>📋 Jadwal Hari Ini</h3><table><thead><tr><th>Jam</th><th>Nama Bel</th><th>Suara</th><th></th></tr></thead><tbody id="todayBody"></tbody></table></div>
+    <div class="card">
+      <h3>🎵 Lagu Nasional Pagi</h3>
+      <div id="musicInfo"></div>
+      <h3 style="margin-top:18px">⚙️ Kontrol Client</h3>
+      <div class="row">
+        <button class="ghost" id="btnFull">⛶ Layar Penuh</button>
+        <button class="ghost" id="btnTest">🔔 Tes Bel</button>
+        <button class="ghost" id="btnMusicTest">🎵 Tes Lagu</button>
+        <button class="ghost" id="btnStop">⏹ Stop Suara</button>
+      </div>
+      <p><small>Client jalan terus walau internet mati — memakai jadwal terakhir yang diterima dari admin. Saat internet nyala lagi, jadwal baru otomatis terunduh (±30 detik).</small></p>
+      <div class="row"><button id="btnAdmin">🔐 Masuk Admin</button></div>
+    </div>
+  </div>
+</main>
+
+<dialog id="dlgAdmin">
+  <h2 style="margin-top:0">🔐 Panel Admin</h2>
+  <div id="loginBox">
+    <p><small id="loginHint">Masukkan password admin server. Kalau server tidak terjangkau, admin masuk mode OFFLINE (perubahan hanya di PC ini).</small></p>
+    <div class="row"><input type="password" id="adminPass" placeholder="Password admin" style="flex:1"><button id="btnLogin">Masuk</button><button class="ghost" id="btnCloseLogin">Tutup</button></div>
+    <p id="loginErr" style="color:var(--red)"></p>
+  </div>
+  <div id="adminBox" style="display:none">
+    <div class="row" style="justify-content:space-between"><span class="pill" id="adminMode"></span><span><button class="ghost" id="btnCloseAdmin">Tutup</button> <button id="btnSave">💾 Simpan &amp; Terbitkan</button></span></div>
+    <p><small>“Simpan &amp; Terbitkan” = config naik ke server (versi +1), semua client online akan sync otomatis. Audio MP3 yang diupload ikut tersimpan di server.</small></p>
+    <div class="tabs">
+      <button data-t="umum" class="on">Umum &amp; Volume</button><button data-t="jadwal">Jadwal Bel</button><button data-t="lagu">Lagu Pagi</button><button data-t="audio">File Audio</button><button data-t="umumkan">📢 Pengumuman</button><button data-t="daya">⏻ Daya PC</button>
+    </div>
+    <div class="sec on" id="sec-umum">
+      <p><label>Nama sekolah</label><br><input id="fName" style="width:100%"></p>
+      <p><label>Motto / subjudul</label><br><input id="fMotto" style="width:100%"></p>
+      <p><label>Volume master: <b id="vMasterVal"></b></label><br><input type="range" id="vMaster" min="0" max="100" style="width:100%"></p>
+      <p><label>Volume bel: <b id="vBellVal"></b></label><br><input type="range" id="vBell" min="0" max="100" style="width:100%"></p>
+      <p><label>Volume lagu: <b id="vMusicVal"></b></label><br><input type="range" id="vMusic" min="0" max="100" style="width:100%"></p>
+      <p><small>Volume final bel = master × bel, lagu = master × lagu. Diatur admin, berlaku di semua client setelah sync.</small></p>
+    </div>
+    <div class="sec" id="sec-jadwal">
+      <div class="card" style="background:#081a3d;margin-bottom:12px">
+        <div class="row">
+          <span><label>Kategori jadwal yang sedang diedit</label><br><select id="profSel" style="min-width:170px"></select></span>
+          <span style="align-self:end"><button class="ghost" id="btnProfActivate">⭐ Jadikan Aktif</button></span>
+          <span style="align-self:end"><button class="ghost" id="btnProfNew">+ Kategori Baru</button></span>
+          <span style="align-self:end"><button class="ghost" id="btnProfRename">✏ Nama</button></span>
+          <span style="align-self:end"><button class="danger" id="btnProfDelete">Hapus</button></span>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <span><label>Otomatis aktif mulai tanggal</label><br><input type="date" id="profFrom"></span>
+          <span><label>sampai tanggal</label><br><input type="date" id="profTo"></span>
+          <span><label>Salin jadwal dari kategori</label><br><select id="profCopySel"></select></span>
+          <span style="align-self:end"><button class="ghost" id="btnProfCopy">⧉ Salin</button></span>
+        </div>
+        <p><small>Contoh: kategori "Ujian" diisi tanggal 15–20 Des → tanggal segitu jadwal Ujian otomatis yang dipakai, selesai tanggalnya balik ke kategori aktif biasa. Rentang dikosongkan = kategori hanya aktif kalau dijadikan aktif manual. Bintang ⭐ = kategori aktif saat ini. Jangan lupa <b>Simpan &amp; Terbitkan</b>.</small></p>
+        <p id="profStatus" style="margin:0"></p>
+      </div>
+      <table><thead><tr><th>Aktif</th><th>Jam</th><th>Nama</th><th>Hari</th><th>Suara</th><th></th></tr></thead><tbody id="schedBody"></tbody></table>
+      <p><button id="btnAddSched">+ Tambah Jadwal</button> <small>Di kolom Suara ada pilihan "⬆ Upload audio baru…" — upload MP3 langsung buat baris itu.</small></p>
+    </div>
+    <div class="sec" id="sec-umumkan">
+      <p><small>Ketik pengumuman → klik Kirim → dalam ±5 detik PC bel di sekolah <b>mengucapkannya dengan suara</b> (text-to-speech) + teksnya tampil besar di layar. Lagu/bel yang sedang bunyi dijeda dulu. Pengumuman butuh client sedang online.</small></p>
+      <div class="row">
+        <button class="ghost ann-tpl" data-tpl="Panggilan kepada {nama}, harap segera menuju {tempat}.">📣 Template: Panggilan</button>
+        <button class="ghost ann-tpl" data-tpl="Pengumuman. {isi pengumuman}">📢 Template: Pengumuman</button>
+        <button class="ghost ann-tpl" data-tpl="Kepada seluruh siswa, harap segera berkumpul di {tempat}.">👥 Template: Kumpul</button>
+      </div>
+      <p><textarea id="annText" rows="3" style="width:100%;background:#081a3d;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:16px" placeholder="Ketik pengumumannya di sini… ganti {nama} dan {tempat} dengan isi aslinya"></textarea></p>
+      <div class="row">
+        <span><label>Diucapkan berapa kali</label><br><select id="annRepeat"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option></select></span>
+        <span style="align-self:end"><button id="btnAnnSend">📢 Kirim ke PC Bel</button></span>
+        <span style="align-self:end"><button class="ghost" id="btnAnnTestLocal">🔊 Tes di Perangkat Ini</button></span>
+        <span style="align-self:end"><button class="danger" id="btnAnnClear">Hapus Antrean</button></span>
+      </div>
+      <p id="annStatus"></p>
+      <h4>Antrean terakhir (2 jam)</h4>
+      <div id="annList"><small>—</small></div>
+    </div>
+    <div class="sec" id="sec-daya">
+      <p><small>PC bel <b>mati sendiri</b> di jam yang diatur di sini — dikerjakan oleh <b>agen daya</b> (program kecil) yang terpasang di PC bel, bukan oleh halaman web ini. Status agen:</small></p>
+      <p id="powerAgentStatus">Memeriksa…</p>
+      <p><label><input type="checkbox" id="pEnabled"> Aktifkan mati otomatis</label></p>
+      <div class="row">
+        <span><label>Jam mati (shutdown)</label><br><input type="time" id="pTime"></span>
+        <span><label>Peringatan sebelum mati (menit)</label><br><input type="number" id="pWarn" min="1" max="60" style="width:90px"></span>
+      </div>
+      <p><label>Hari mati otomatis</label></p><div class="daybox" id="pDays"></div>
+      <p><small>Selama masa peringatan, layar PC bel menampilkan hitung mundur besar + tombol <b>Batalkan</b> (buat guru yang masih memakai PC, mis. ada acara sore). Batal hanya berlaku hari itu.<br><br>
+      <b>Menyalakan pagi hari</b> tidak bisa dari aplikasi (PC mati total tidak bisa menerima perintah). Dua cara yang andal, pilih salah satu, diatur SEKALI saja:<br>
+      1️⃣ <b>BIOS RTC</b> — nyalakan PC → tekan Del/F2 saat logo → menu Power/APM → "Resume by Alarm / RTC Wake" = Aktif, harian jam 05:45 → simpan (F10).<br>
+      2️⃣ <b>Wake-on-LAN dari Mikrotik sekolah</b> — aktifkan WoL di BIOS + Windows PC bel, lalu di Mikrotik buat Scheduler + script <i>/tool wol</i> ke MAC address PC bel di jam yang sama.<br>
+      Agen juga otomatis membuka Chrome ke halaman bel ini setiap PC menyala (dengan izin suara otomatis), jadi bel langsung jalan tanpa klik. Panduan lengkap ada di file CARA-PASANG-AGEN yang menyertai agen.</small></p>
+    </div>
+    <div class="sec" id="sec-lagu">
+      <p><label><input type="checkbox" id="mEnabled"> Aktifkan lagu nasional pagi</label></p>
+      <div class="row"><span><label>Mulai jam</label><br><input type="time" id="mStart"></span>
+      <span><label>Berhenti</label><br><select id="mStop"><option value="firstBell">Saat bel masuk pertama</option><option value="duration">Setelah durasi</option></select></span>
+      <span><label>Durasi (menit)</label><br><input type="number" id="mDur" min="1" max="180" style="width:90px"></span>
+      <span><label>Urutan</label><br><select id="mMode"><option value="urut">Berurutan</option><option value="acak">Acak</option></select></span></div>
+      <p><label>Hari lagu diputar</label></p><div class="daybox" id="mDays"></div>
+      <h4>Daftar lagu (pilih file audionya di tab File Audio)</h4>
+      <table><thead><tr><th>Judul Lagu</th><th>File Audio</th><th></th></tr></thead><tbody id="trackBody"></tbody></table>
+      <p><button id="btnAddTrack">+ Tambah Lagu</button></p>
+    </div>
+    <div class="sec" id="sec-audio">
+      <p><small>Upload MP3/WAV lagu nasional atau rekaman pengumuman. File tersimpan di server (mode online) + di-cache client untuk offline. Maks ±15MB/file.</small></p>
+      <div class="row"><input type="text" id="aTitle" placeholder="Nama audio, mis: Indonesia Raya"><input type="file" id="aFile" accept="audio/*"><button id="btnUpload">⬆ Upload</button></div>
+      <table><thead><tr><th>Nama</th><th>Sumber</th><th></th></tr></thead><tbody id="audioBody"></tbody></table>
+      <p><small>Suara bawaan (tanpa file, selalu tersedia offline): Bel Klasik, Bel Panjang, Ding-Dong, Lonceng, Beep.</small></p>
+    </div>
+  </div>
+</dialog>
+<div id="annBanner"><div><div class="lbl">📢 PENGUMUMAN</div><div class="big" id="annBannerTxt"></div></div></div>
+<div id="powerBanner"><div><div class="lbl">⏻ PC BEL AKAN MATI OTOMATIS</div><div class="big" id="powerCd">--:--</div><p style="color:#fecaca;max-width:560px">PC ini diatur admin untuk mati sendiri. Kalau masih dipakai (mis. ada acara sore), batalkan mati hari ini — besok jadwalnya jalan lagi seperti biasa.</p><button id="btnPowerCancel" style="font-size:18px;padding:13px 24px;border-radius:12px">✋ Batalkan Mati Hari Ini</button></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="rowFile" accept="audio/*" style="display:none">
+
+<script>
+'use strict';
+/* ============ Util & State ============ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const DAYS=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const FULLDAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const MONTHS=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const SYNTHS={'bel-klasik':'🔔 Bel Klasik','bel-panjang':'🔔 Bel Panjang','ding-dong':'🎵 Ding-Dong','lonceng':'🛎 Lonceng','beep':'📢 Beep'};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const pad=n=>String(n).padStart(2,'0');
+const hm=d=>pad(d.getHours())+':'+pad(d.getMinutes());
+let config=null, serverOnline=false, adminPassword='', adminOnline=false, fired=new Set(), wakeLock=null;
+let audioCtx=null, currentAudio=null, musicState={playing:false,idx:0,stopped:true,el:null};
+
+function toast(m,ms=3500){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',ms)}
+function defaultConfig(){return {version:0,school:{name:'SMK 11 Maret Jakarta',motto:''},volume:{master:80,bell:100,music:60},morningMusic:{enabled:true,startTime:'06:30',stopAt:'firstBell',durationMinutes:30,days:[1,2,3,4,5],mode:'urut',tracks:[]},power:{enabled:false,shutdownTime:'17:30',days:[1,2,3,4,5,6],warnMinutes:5},schedules:[],audios:[]}}
+function normalize(c){const d=defaultConfig();c=Object.assign(d,c||{});c.school=Object.assign(d.school,c.school);c.volume=Object.assign({master:80,bell:100,music:60},c.volume);c.morningMusic=Object.assign(defaultConfig().morningMusic,c.morningMusic);c.power=Object.assign(defaultConfig().power,c.power);c.audios=c.audios||[];c.schedules=c.schedules||[];
+  // Migrasi kategori jadwal: format lama (schedules polos) -> profil "Normal"
+  if(!Array.isArray(c.profiles)||!c.profiles.length){c.profiles=[{id:'normal',name:'Normal',from:'',to:'',schedules:c.schedules}];c.activeProfileId='normal'}
+  c.profiles.forEach(p=>{if(!Array.isArray(p.schedules))p.schedules=(p.id==='normal'||p.id===c.activeProfileId)?c.schedules:[];p.from=p.from||'';p.to=p.to||''});
+  if(!c.profiles.some(p=>p.id===c.activeProfileId))c.activeProfileId=c.profiles[0].id;
+  const act=c.profiles.find(p=>p.id===c.activeProfileId); if(act)c.schedules=act.schedules; // cerminkan utk client versi lama
+  return c}
+const dstr=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function effectiveProfile(date){const t=dstr(date||new Date());const auto=config.profiles.find(p=>p.from&&p.to&&t>=p.from&&t<=p.to);if(auto)return{prof:auto,auto:true};const act=config.profiles.find(p=>p.id===config.activeProfileId)||config.profiles[0];return{prof:act,auto:false}}
+function effSchedules(date){return effectiveProfile(date).prof.schedules||[]}
+function loadLocal(){try{return normalize(JSON.parse(localStorage.getItem('belConfig')))}catch{return defaultConfig()}}
+function saveLocal(){localStorage.setItem('belConfig',JSON.stringify(config))}
+
+/* ============ IndexedDB untuk audio lokal (offline) ============ */
+const idb=new Promise((res,rej)=>{const r=indexedDB.open('bel-sekolah',1);r.onupgradeneeded=()=>r.result.createObjectStore('audio');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function idbPut(id,blob){const db=await idb;return new Promise(r=>{const t=db.transaction('audio','readwrite');t.objectStore('audio').put(blob,id);t.oncomplete=r})}
+async function idbGet(id){const db=await idb;return new Promise(r=>{const q=db.transaction('audio').objectStore('audio').get(id);q.onsuccess=()=>r(q.result||null);q.onerror=()=>r(null)})}
+
+/* ============ Audio engine ============ */
+function ctx(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
+function volBell(){return (config.volume.master/100)*(config.volume.bell/100)}
+function volMusic(){return (config.volume.master/100)*(config.volume.music/100)}
+function tone(freq,t0,dur,type='sine',vol=0.5,slideTo){const ac=ctx(),o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(freq,ac.currentTime+t0);if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,ac.currentTime+t0+dur);g.gain.setValueAtTime(0.0001,ac.currentTime+t0);g.gain.exponentialRampToValueAtTime(vol,ac.currentTime+t0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+t0+dur);o.connect(g).connect(ac.destination);o.start(ac.currentTime+t0);o.stop(ac.currentTime+t0+dur+0.05)}
+function playSynth(kind,vol){
+  if(kind==='ding-dong'){tone(659,0,0.45,'sine',vol);tone(523,0.5,0.8,'sine',vol)}
+  else if(kind==='lonceng'){[0,0.9,1.8].forEach(t=>{tone(1175,t,0.7,'triangle',vol);tone(1568,t,0.5,'sine',vol*0.6)})}
+  else if(kind==='beep'){[0,0.35,0.7].forEach(t=>tone(880,t,0.22,'square',vol*0.5))}
+  else{ // bel klasik / panjang: dering bergetar
+    const dur=kind==='bel-panjang'?5:3, ac=ctx(),o=ac.createOscillator(),g=ac.createGain(),lfo=ac.createOscillator(),lg=ac.createGain();
+    o.type='triangle';o.frequency.value=1568;lfo.frequency.value=13;lg.gain.value=vol*0.55;lfo.connect(lg).connect(g.gain);
+    g.gain.value=vol*0.5;o.connect(g).connect(ac.destination);const t=ac.currentTime;o.start(t);lfo.start(t);o.stop(t+dur);lfo.stop(t+dur);
+  }
+  return kind==='bel-panjang'?5000:kind==='bel-klasik'?3000:kind==='lonceng'?2700:1400;
+}
+async function audioSrc(a){ // a = entri config.audios
+  if(!a) return null;
+  if(a.file) return a.file; // dari server (di-cache SW/browser)
+  const blob=await idbGet(a.id); return blob?URL.createObjectURL(blob):null;
+}
+async function playSound(sound, kind){ // kind: 'bell'|'music'
+  const vol=kind==='music'?volMusic():volBell();
+  stopCurrent();
+  if(SYNTHS[sound]){playSynth(sound,Math.max(vol,0.01));return Promise.resolve()}
+  const a=config.audios.find(x=>x.id===sound);
+  const src=await audioSrc(a);
+  if(!src){toast('⚠️ File audio "'+(a?a.title:sound)+'" belum ada / belum terunduh');return Promise.resolve()}
+  return new Promise(res=>{const el=new Audio(src);el.volume=Math.min(vol,1);currentAudio=el;el.onended=()=>res();el.onerror=()=>res();el.play().catch(()=>res())});
+}
+function stopCurrent(){if(currentAudio){try{currentAudio.pause()}catch{}currentAudio=null} if(musicState.el){try{musicState.el.pause()}catch{}musicState.el=null} musicState.playing=false; $('#nowPlay').style.display='none'}
+
+/* ============ Lagu pagi ============ */
+function firstBellTime(date){const s=effSchedules(date).filter(x=>x.enabled&&x.days.includes(date.getDay())).map(x=>x.time).sort();return s[0]||null}
+function musicWindow(now){
+  const m=config.morningMusic; if(!m.enabled||!m.days.includes(now.getDay()))return null;
+  const start=m.startTime; let end=null;
+  if(m.stopAt==='firstBell') end=firstBellTime(now);
+  else {const [h,mi]=start.split(':').map(Number);const d=new Date(now);d.setHours(h,mi+m.durationMinutes,0,0);end=pad(d.getHours())+':'+pad(d.getMinutes())}
+  if(!end) return null; const cur=hm(now); return (cur>=start&&cur<end)?{start,end}:null;
+}
+async function startMusic(){
+  if(musicState.playing) return; const tracks=config.morningMusic.tracks.filter(t=>t.audioId);
+  if(!tracks.length){return}
+  musicState.playing=true; musicState.stopped=false;
+  let order=tracks.map((_,i)=>i); if(config.morningMusic.mode==='acak')order.sort(()=>Math.random()-0.5);
+  for(const i of order){
+    if(musicState.stopped||!musicWindow(new Date()))break;
+    const tr=tracks[i], a=config.audios.find(x=>x.id===tr.audioId), src=await audioSrc(a);
+    if(!src){continue}
+    $('#nowPlay').style.display='block'; $('#nowPlay').textContent='🎵 Sedang memutar lagu nasional: '+(tr.title||a.title);
+    await new Promise(res=>{const el=new Audio(src);el.volume=Math.min(volMusic(),1);musicState.el=el;el.onended=res;el.onerror=res;el.play().catch(res)});
+  }
+  musicState.playing=false; $('#nowPlay').style.display='none';
+}
+
+/* ============ Mesin bel ============ */
+function tick(){
+  const now=new Date();
+  $('#clock').textContent=pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+  $('#dateTxt').textContent=FULLDAYS[now.getDay()]+', '+now.getDate()+' '+MONTHS[now.getMonth()]+' '+now.getFullYear();
+  // bel terjadwal (jendela 2 detik, anti dobel pakai Set per menit)
+  for(const s of effSchedules(now)){
+    if(!s.enabled||!s.days.includes(now.getDay())||s.time!==hm(now)||now.getSeconds()>1)continue;
+    const key=now.toDateString()+s.id+s.time; if(fired.has(key))continue; fired.add(key);
+    const wasMusic=musicState.playing; if(wasMusic){musicState.stopped=true;stopCurrent()}
+    toast('🔔 '+s.name+' — '+s.time); playSound(s.sound,'bell');
+  }
+  // lagu pagi
+  if(musicWindow(now)&&!musicState.playing) startMusic();
+  if(!musicWindow(now)&&musicState.playing){musicState.stopped=true;stopCurrent()}
+  powerTick(now);
+  renderNext(now); renderToday(now);
+}
+function nextSchedule(now){
+  for(let add=0;add<8;add++){const d=new Date(now);d.setDate(d.getDate()+add);
+    const list=effSchedules(d).filter(s=>s.enabled&&s.days.includes(d.getDay())).sort((a,b)=>a.time.localeCompare(b.time));
+    for(const s of list){const [h,mi]=s.time.split(':').map(Number);const t=new Date(d);t.setHours(h,mi,0,0);if(t>now)return{s,at:t}}}
+  return null;
+}
+let lastNextKey='';
+function renderNext(now){
+  const n=nextSchedule(now); if(!n){$('#nextName').textContent='Tidak ada jadwal';$('#nextCd').textContent='—';return}
+  const key=n.s.id+n.at; if(key!==lastNextKey){lastNextKey=key;$('#nextName').textContent=n.s.name;$('#nextTime').textContent=FULLDAYS[n.at.getDay()]+' • '+n.s.time+' WIB'}
+  let diff=Math.max(0,Math.floor((n.at-now)/1000));const h=Math.floor(diff/3600),mi=Math.floor(diff%3600/60),se=diff%60;
+  $('#nextCd').textContent=pad(h)+':'+pad(mi)+':'+pad(se);
+}
+function soundLabel(v){if(SYNTHS[v])return SYNTHS[v];const a=config.audios.find(x=>x.id===v);return a?'🎧 '+a.title:v}
+function renderToday(now){
+  const list=effSchedules(now).filter(s=>s.enabled&&s.days.includes(now.getDay())).sort((a,b)=>a.time.localeCompare(b.time));
+  const n=nextSchedule(now);
+  $('#todayBody').innerHTML=list.map(s=>{const passed=s.time<hm(now)&&now.getSeconds()>=0&&s.time!==hm(now);const isNext=n&&n.s.id===s.id&&n.at.getDate()===now.getDate();
+    return `<tr class="${isNext?'nextrow':passed?'passed':''}"><td><b>${s.time}</b></td><td>${s.name}</td><td>${soundLabel(s.sound)}</td><td>${isNext?'⏭ Berikutnya':passed?'✓ Lewat':''}</td></tr>`}).join('')||'<tr><td colspan="4">Tidak ada jadwal hari ini</td></tr>';
+  const m=config.morningMusic, w=musicWindow(now);
+  $('#musicInfo').innerHTML=m.enabled?`Aktif ${m.days.map(d=>DAYS[d]).join(', ')} • mulai <b>${m.startTime}</b> • berhenti ${m.stopAt==='firstBell'?'saat bel pertama ('+(firstBellTime(now)||'-')+')':'setelah '+m.durationMinutes+' menit'}<br>${m.tracks.length} lagu dalam antrean${w?' • <b style="color:var(--ok)">SEDANG DALAM JAM PUTAR</b>':''}`:'Nonaktif';
+  const ep=effectiveProfile(now); $('#profileTxt').textContent=ep.prof.name+(ep.auto?' (otomatis)':'');
+  $('#volTxt').textContent=config.volume.master+'%';
+  $('#schoolName').textContent=config.school.name; $('#schoolMotto').textContent=config.school.motto||'';
+  document.title='🔔 '+config.school.name+' — Bel Otomatis';
+}
+
+/* ============ Pengumuman (TTS) ============ */
+let playedAnn=new Set(JSON.parse(localStorage.getItem('belAnnPlayed')||'[]'));
+function markAnn(id){playedAnn.add(id);localStorage.setItem('belAnnPlayed',JSON.stringify([...playedAnn].slice(-100)))}
+function speakOnce(text){return new Promise(res=>{
+  if(!('speechSynthesis' in window)){res();return}
+  try{const u=new SpeechSynthesisUtterance(text);u.lang='id-ID';u.rate=0.95;u.volume=Math.min(Math.max(volBell(),0.05),1);
+    const vs=speechSynthesis.getVoices();const idv=vs.find(v=>/id[-_]ID|indonesia/i.test(v.lang+' '+v.name));if(idv)u.voice=idv;
+    let done=false;const fin=()=>{if(!done){done=true;res()}};u.onend=fin;u.onerror=fin;
+    speechSynthesis.speak(u);setTimeout(fin,4000+text.length*110); // pengaman kalau onend tak terpanggil
+  }catch{res()}
+})}
+let annBusy=false;
+async function runAnnouncement(item){
+  if(annBusy)return; annBusy=true;
+  const wasMusic=musicState.playing; if(wasMusic){musicState.stopped=true;stopCurrent()}
+  playSynth('ding-dong',Math.max(volBell(),0.05));
+  $('#annBannerTxt').textContent=item.text; $('#annBanner').style.display='flex';
+  await new Promise(r=>setTimeout(r,1200));
+  for(let i=0;i<(item.repeat||2);i++){await speakOnce(item.text);await new Promise(r=>setTimeout(r,600))}
+  await new Promise(r=>setTimeout(r,5000));
+  $('#annBanner').style.display='none'; annBusy=false;
+  if(wasMusic&&musicWindow(new Date())){musicState.stopped=false;startMusic()}
+}
+async function pollAnnounce(){
+  try{const r=await fetch('/api/announce',{cache:'no-store'});if(!r.ok)return;const j=await r.json();
+    for(const it of (j.items||[])){ if(playedAnn.has(it.id))continue; if(Date.now()-it.at>10*60*1000){markAnn(it.id);continue} markAnn(it.id); runAnnouncement(it); }
+  }catch{}
+}
+
+/* ============ Sync online ============ */
+async function sync(showToast){
+  try{
+    const r=await fetch('/api/config',{cache:'no-store'}); if(!r.ok)throw 0;
+    const remote=normalize(await r.json()); serverOnline=true;
+    if((remote.version||0)>(config.version||0)){config=remote;saveLocal();toast('✅ Jadwal diperbarui admin (versi '+config.version+')');applyAdminForm()}
+    else if(showToast)toast('Sudah versi terbaru (v'+config.version+')');
+    $('#syncTxt').textContent='Config: server v'+remote.version+' • sync '+pad(new Date().getHours())+':'+pad(new Date().getMinutes())+':'+pad(new Date().getSeconds());
+  }catch{serverOnline=false;$('#syncTxt').textContent='Config: lokal v'+(config.version||0)+' (offline — tetap jalan)'}
+  const p=$('#pillNet');p.classList.toggle('off',!serverOnline);
+  $('#netTxt').textContent=serverOnline?'Online — terhubung server':'Offline — mode mandiri';
+}
+
+/* ============ Admin ============ */
+let editingProfileId=null;
+function editingProfile(){if(!config.profiles.some(p=>p.id===editingProfileId))editingProfileId=config.activeProfileId;return config.profiles.find(p=>p.id===editingProfileId)}
+function soundOptions(sel){return Object.entries(SYNTHS).map(([v,l])=>`<option value="${v}" ${v===sel?'selected':''}>${l}</option>`).join('')+config.audios.map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>🎧 ${a.title}</option>`).join('')+'<option value="__upload__">⬆ Upload audio baru…</option>'}
+function dayBoxHTML(active){return DAYS.map((d,i)=>`<button type="button" data-day="${i}" class="${active.includes(i)?'on':''}">${d}</button>`).join('')}
+document.addEventListener('click',e=>{if(e.target.matches('.daybox button'))e.target.classList.toggle('on')});
+function readDays(el){return [...el.querySelectorAll('button.on')].map(b=>+b.dataset.day)}
+function applyAdminForm(){
+  if(!$('#adminBox')||$('#adminBox').style.display==='none')return;
+  $('#fName').value=config.school.name;$('#fMotto').value=config.school.motto||'';
+  $('#vMaster').value=config.volume.master;$('#vBell').value=config.volume.bell;$('#vMusic').value=config.volume.music;
+  $('#vMasterVal').textContent=config.volume.master+'%';$('#vBellVal').textContent=config.volume.bell+'%';$('#vMusicVal').textContent=config.volume.music+'%';
+  $('#mEnabled').checked=config.morningMusic.enabled;$('#mStart').value=config.morningMusic.startTime;$('#mStop').value=config.morningMusic.stopAt;$('#mDur').value=config.morningMusic.durationMinutes;$('#mMode').value=config.morningMusic.mode;
+  $('#mDays').innerHTML=dayBoxHTML(config.morningMusic.days);
+  $('#pEnabled').checked=config.power.enabled;$('#pTime').value=config.power.shutdownTime;$('#pWarn').value=config.power.warnMinutes;
+  $('#pDays').innerHTML=dayBoxHTML(config.power.days);
+  refreshPowerStatus();
+  const ep=editingProfile();
+  $('#profSel').innerHTML=config.profiles.map(p=>`<option value="${p.id}" ${p.id===ep.id?'selected':''}>${p.id===config.activeProfileId?'⭐ ':''}${p.name}</option>`).join('');
+  $('#profCopySel').innerHTML=config.profiles.filter(p=>p.id!==ep.id).map(p=>`<option value="${p.id}">${p.name}</option>`).join('')||'<option value="">— tidak ada kategori lain —</option>';
+  $('#profFrom').value=ep.from||'';$('#profTo').value=ep.to||'';
+  const eff=effectiveProfile(new Date());
+  $('#profStatus').innerHTML=`Hari ini yang dipakai: <b>${eff.prof.name}</b>${eff.auto?' (karena masuk rentang tanggal otomatisnya)':''} • ⭐ aktif manual: <b>${(config.profiles.find(p=>p.id===config.activeProfileId)||{}).name||'-'}</b> • kategori ini berisi <b>${ep.schedules.length} jadwal</b>`;
+  $('#schedBody').innerHTML=ep.schedules.map(s=>`<tr data-id="${s.id}">
+    <td><input type="checkbox" class="sc-en" ${s.enabled?'checked':''}></td>
+    <td><input type="time" class="sc-time" value="${s.time}"></td>
+    <td><input class="sc-name" value="${s.name.replace(/"/g,'&quot;')}" style="width:150px"></td>
+    <td><div class="daybox sc-days">${dayBoxHTML(s.days)}</div></td>
+    <td><select class="sc-sound">${soundOptions(s.sound)}</select></td>
+    <td><button class="ghost sc-test">Tes</button> <button class="danger sc-del">✕</button></td></tr>`).join('');
+  $('#trackBody').innerHTML=config.morningMusic.tracks.map(t=>`<tr data-id="${t.id}">
+    <td><input class="tr-title" value="${(t.title||'').replace(/"/g,'&quot;')}" style="width:200px"></td>
+    <td><select class="tr-audio"><option value="">— pilih file —</option>${config.audios.map(a=>`<option value="${a.id}" ${a.id===t.audioId?'selected':''}>${a.title}</option>`).join('')}</select></td>
+    <td><button class="danger tr-del">✕</button></td></tr>`).join('');
+  $('#audioBody').innerHTML=config.audios.map(a=>`<tr><td>${a.title}</td><td>${a.file?'Server':'Lokal (PC ini saja)'} </td><td><button class="ghost au-test" data-id="${a.id}">Tes</button> <button class="danger au-del" data-id="${a.id}">✕</button></td></tr>`).join('')||'<tr><td colspan="3">Belum ada file audio</td></tr>';
+}
+function collectAdmin(){
+  config.school.name=$('#fName').value.trim()||config.school.name; config.school.motto=$('#fMotto').value;
+  config.volume={master:+$('#vMaster').value,bell:+$('#vBell').value,music:+$('#vMusic').value};
+  const ep=editingProfile();
+  ep.schedules=$$('#schedBody tr').map(tr=>({id:tr.dataset.id,name:tr.querySelector('.sc-name').value,time:tr.querySelector('.sc-time').value,days:readDays(tr.querySelector('.sc-days')),sound:tr.querySelector('.sc-sound').value==='__upload__'?'ding-dong':tr.querySelector('.sc-sound').value,enabled:tr.querySelector('.sc-en').checked}));
+  ep.from=$('#profFrom').value; ep.to=$('#profTo').value;
+  const act=config.profiles.find(p=>p.id===config.activeProfileId); if(act)config.schedules=act.schedules;
+  config.morningMusic.enabled=$('#mEnabled').checked;config.morningMusic.startTime=$('#mStart').value;config.morningMusic.stopAt=$('#mStop').value;config.morningMusic.durationMinutes=+$('#mDur').value;config.morningMusic.mode=$('#mMode').value;config.morningMusic.days=readDays($('#mDays'));
+  config.morningMusic.tracks=$$('#trackBody tr').map(tr=>({id:tr.dataset.id,title:tr.querySelector('.tr-title').value,audioId:tr.querySelector('.tr-audio').value}));
+  config.power={enabled:$('#pEnabled').checked,shutdownTime:$('#pTime').value||'17:30',warnMinutes:Math.min(60,Math.max(1,+$('#pWarn').value||5)),days:readDays($('#pDays'))};
+}
+$('#btnAdmin').onclick=()=>{$('#dlgAdmin').showModal();$('#loginBox').style.display='block';$('#adminBox').style.display='none';$('#loginErr').textContent=''};
+$('#btnCloseLogin').onclick=()=>$('#dlgAdmin').close();
+$('#btnCloseAdmin').onclick=()=>$('#dlgAdmin').close();
+$('#btnLogin').onclick=async()=>{
+  const pw=$('#adminPass').value; adminPassword=pw;
+  try{const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    if(!r.ok)throw new Error('Password admin salah');
+    adminOnline=true;await sync();
+  }catch(e){ if(e.message==='Password admin salah'){$('#loginErr').textContent=e.message;return} adminOnline=false; }
+  $('#loginBox').style.display='none';$('#adminBox').style.display='block';
+  $('#adminMode').textContent=adminOnline?'🌐 Mode ONLINE — terbit ke server':'📴 Mode OFFLINE — simpan lokal di PC ini saja';
+  applyAdminForm();
+};
+$$('.tabs button').forEach(b=>b.onclick=()=>{$$('.tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$$('.sec').forEach(x=>x.classList.remove('on'));$('#sec-'+b.dataset.t).classList.add('on');if(b.dataset.t==='umumkan')refreshAnnList();if(b.dataset.t==='daya')refreshPowerStatus()});
+['vMaster','vBell','vMusic'].forEach(id=>$('#'+id).oninput=e=>$('#'+id+'Val').textContent=e.target.value+'%');
+$('#btnAddSched').onclick=()=>{collectAdmin();editingProfile().schedules.push({id:uid(),name:'Bel Baru',time:'12:00',days:[1,2,3,4,5],sound:'ding-dong',enabled:true});applyAdminForm()};
+/* ===== Kategori jadwal (profil) ===== */
+$('#profSel').onchange=e=>{collectAdmin();editingProfileId=e.target.value;applyAdminForm()};
+$('#btnProfActivate').onclick=()=>{collectAdmin();config.activeProfileId=editingProfileId;applyAdminForm();toast('⭐ Kategori "'+editingProfile().name+'" jadi yang aktif — jangan lupa Simpan & Terbitkan')};
+$('#btnProfNew').onclick=()=>{collectAdmin();const n=prompt('Nama kategori baru (mis: Ujian, Bulan Puasa, Jumat Pendek):');if(!n)return;const p={id:uid(),name:n.trim(),from:'',to:'',schedules:[]};config.profiles.push(p);editingProfileId=p.id;applyAdminForm();toast('Kategori "'+p.name+'" dibuat (masih kosong) — isi jadwalnya atau pakai tombol Salin')};
+$('#btnProfRename').onclick=()=>{const ep=editingProfile();const n=prompt('Nama kategori:',ep.name);if(n&&n.trim()){ep.name=n.trim();applyAdminForm()}};
+$('#btnProfDelete').onclick=()=>{if(config.profiles.length<=1){toast('Tidak bisa — harus ada minimal 1 kategori');return}const ep=editingProfile();if(!confirm('Hapus kategori "'+ep.name+'" beserta semua jadwalnya?'))return;config.profiles=config.profiles.filter(p=>p.id!==ep.id);if(config.activeProfileId===ep.id)config.activeProfileId=config.profiles[0].id;editingProfileId=config.activeProfileId;applyAdminForm()};
+$('#btnProfCopy').onclick=()=>{const src=config.profiles.find(p=>p.id===$('#profCopySel').value);if(!src){toast('Tidak ada kategori sumber');return}if(!confirm('Isi kategori "'+editingProfile().name+'" akan DIGANTI salinan jadwal dari "'+src.name+'". Lanjut?'))return;collectAdmin();editingProfile().schedules=src.schedules.map(s=>({...s,id:uid(),days:[...s.days]}));applyAdminForm();toast('Jadwal tersalin dari "'+src.name+'"')};
+/* ===== Upload audio (dipakai tab Audio & pilihan upload per jadwal) ===== */
+async function uploadAudioFile(file,title){
+  if(file.size>15*1024*1024){toast('File terlalu besar (maks 15MB)');return null}
+  const id=uid(); await idbPut(id,file);
+  let serverFile='';
+  if(adminOnline){ try{ const b64=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result.split(',')[1]);fr.readAsDataURL(file)});
+    const r=await fetch('/api/audio',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':adminPassword},body:JSON.stringify({dataBase64:b64,ext:(file.name.split('.').pop()||'mp3')})});
+    const j=await r.json(); if(r.ok)serverFile=j.file; }catch{} }
+  const entry={id,title:title||file.name.replace(/\.[^.]+$/,''),file:serverFile};
+  config.audios.push(entry); return entry;
+}
+let rowUploadId=null;
+document.addEventListener('change',e=>{
+  if(e.target.matches('.sc-sound')&&e.target.value==='__upload__'){rowUploadId=e.target.closest('tr').dataset.id;$('#rowFile').click()}
+});
+$('#rowFile').onchange=async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f||!rowUploadId)return;
+  collectAdmin();
+  const entry=await uploadAudioFile(f);
+  if(entry){const s=editingProfile().schedules.find(x=>x.id===rowUploadId);if(s)s.sound=entry.id;applyAdminForm();toast('✅ Audio "'+entry.title+'" terupload & terpasang di jadwal itu — jangan lupa Simpan & Terbitkan')}
+  else applyAdminForm();
+  rowUploadId=null;
+};
+$('#btnAddTrack').onclick=()=>{collectAdmin();config.morningMusic.tracks.push({id:uid(),title:'Lagu Nasional',audioId:''});applyAdminForm()};
+document.addEventListener('click',e=>{
+  if(e.target.matches('.sc-del')){collectAdmin();const id=e.target.closest('tr').dataset.id;const ep=editingProfile();ep.schedules=ep.schedules.filter(s=>s.id!==id);applyAdminForm()}
+  if(e.target.matches('.tr-del')){collectAdmin();const id=e.target.closest('tr').dataset.id;config.morningMusic.tracks=config.morningMusic.tracks.filter(t=>t.id!==id);applyAdminForm()}
+  if(e.target.matches('.sc-test')){const tr=e.target.closest('tr');playSound(tr.querySelector('.sc-sound').value,'bell')}
+  if(e.target.matches('.au-test')){playSound(e.target.dataset.id,'music')}
+  if(e.target.matches('.au-del')){const id=e.target.dataset.id;config.audios=config.audios.filter(a=>a.id!==id);applyAdminForm();toast('Audio dihapus dari daftar — klik Simpan untuk menerbitkan')}
+});
+$('#btnUpload').onclick=async()=>{
+  const f=$('#aFile').files[0];
+  if(!f){toast('Pilih file audio dulu');return}
+  collectAdmin();
+  const entry=await uploadAudioFile(f,$('#aTitle').value.trim()||undefined);
+  applyAdminForm();
+  if(entry)toast(entry.file?'✅ Audio terupload ke server + tersimpan lokal':'✅ Audio tersimpan lokal (offline). Upload ulang saat online agar client lain dapat filenya');
+};
+$('#btnSave').onclick=async()=>{
+  collectAdmin(); saveLocal();
+  if(adminOnline){
+    try{const r=await fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':adminPassword},body:JSON.stringify(config)});
+      const j=await r.json(); if(!r.ok)throw new Error(j.error||'gagal');
+      config.version=j.version; saveLocal(); toast('🚀 Diterbitkan! Config versi '+j.version+' — semua client online akan sync ±30 detik'); await sync();
+    }catch(e){toast('⚠️ Gagal terbit ke server ('+e.message+') — tersimpan lokal saja')}
+  } else toast('💾 Tersimpan lokal di PC ini (mode offline)');
+  tick();
+};
+
+/* ============ Admin: pengumuman ============ */
+$$('.ann-tpl').forEach(b=>b.onclick=()=>{$('#annText').value=b.dataset.tpl;$('#annText').focus()});
+async function refreshAnnList(){
+  try{const r=await fetch('/api/announce',{cache:'no-store'});const j=await r.json();
+    $('#annList').innerHTML=(j.items&&j.items.length)?j.items.slice().reverse().map(a=>`<div style="padding:6px 0;border-bottom:1px solid var(--line)"><small>${new Date(a.at).toLocaleTimeString('id-ID')} • ${a.repeat}×</small><br>${a.text.replace(/</g,'&lt;')}</div>`).join(''):'<small>Antrean kosong</small>';
+  }catch{$('#annList').innerHTML='<small>Tidak terhubung ke server</small>'}
+}
+$('#btnAnnSend').onclick=async()=>{
+  const text=$('#annText').value.trim();
+  if(!text){toast('Ketik pengumumannya dulu');return}
+  if(!adminOnline){$('#annStatus').textContent='⚠️ Mode offline — pengumuman hanya bisa dikirim saat admin online.';return}
+  try{const r=await fetch('/api/announce',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':adminPassword},body:JSON.stringify({text,repeat:+$('#annRepeat').value})});
+    const j=await r.json(); if(!r.ok)throw new Error(j.error||'gagal');
+    $('#annStatus').textContent='✅ Terkirim '+new Date().toLocaleTimeString('id-ID')+' — PC bel akan mengucapkannya dalam ±5 detik (kalau sedang online).';
+    refreshAnnList();
+  }catch(e){$('#annStatus').textContent='⚠️ Gagal kirim: '+e.message}
+};
+$('#btnAnnTestLocal').onclick=()=>{const t=$('#annText').value.trim()||'Ini tes pengumuman dari bel sekolah.';runAnnouncement({text:t,repeat:1})};
+$('#btnAnnClear').onclick=async()=>{if(!adminOnline){toast('Butuh mode online');return}await fetch('/api/announce/clear',{method:'POST',headers:{'x-admin-password':adminPassword}});refreshAnnList();toast('Antrean pengumuman dikosongkan')};
+
+/* ============ Client controls ============ */
+$('#btnUnlock').onclick=async()=>{ctx();playSynth('ding-dong',0.4);
+  try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch{} // pemanasan TTS (butuh gestur pengguna)
+  $('#unlock').style.display='none';
+  try{wakeLock=await navigator.wakeLock?.request('screen')}catch{}
+  toast('Bel aktif. Jangan tutup tab ini.')};
+$('#btnFull').onclick=()=>document.documentElement.requestFullscreen?.();
+$('#btnTest').onclick=()=>playSound('bel-klasik','bell');
+$('#btnStop').onclick=()=>{musicState.stopped=true;stopCurrent();toast('Suara dihentikan')};
+$('#btnMusicTest').onclick=async()=>{musicState.stopped=false;const tr=config.morningMusic.tracks.find(t=>t.audioId);if(!tr){toast('Belum ada lagu yang dipilih file audionya (atur di Admin → Lagu Pagi)');return} const a=config.audios.find(x=>x.id===tr.audioId);const src=await audioSrc(a);if(!src){toast('File lagu belum tersedia di PC ini');return} $('#nowPlay').style.display='block';$('#nowPlay').textContent='🎵 Tes lagu: '+tr.title;const el=new Audio(src);el.volume=Math.min(volMusic(),1);musicState.el=el;musicState.playing=true;el.onended=()=>{musicState.playing=false;$('#nowPlay').style.display='none'};el.play().catch(()=>{})};
+document.addEventListener('visibilitychange',async()=>{if(document.visible&&wakeLock===null)try{wakeLock=await navigator.wakeLock?.request('screen')}catch{}});
+
+/* ============ Daya PC bel: banner hitung mundur + batalkan ============ */
+let powerState={agent:null,cancelDate:''};
+async function pollPower(){try{const r=await fetch('/api/power',{cache:'no-store'});if(r.ok)powerState=await r.json()}catch{}}
+async function refreshPowerStatus(){
+  const el=$('#powerAgentStatus'); if(!el)return;
+  await pollPower();
+  const a=powerState.agent;
+  el.innerHTML=a?('🟢 Agen daya <b>'+String(a.name).replace(/</g,'&lt;')+'</b> aktif — laporan terakhir '+new Date(a.at).toLocaleString('id-ID')+' ('+Math.max(0,Math.round((Date.now()-a.at)/1000))+' detik lalu).'+(powerState.cancelDate===dstr(new Date())?'<br>✋ Mati otomatis HARI INI sudah dibatalkan dari PC bel.':'')):'🔴 Agen belum pernah lapor — agen daya belum terpasang/jalan di PC bel (lihat panduan CARA-PASANG-AGEN). Tanpa agen, pengaturan di tab ini tidak bekerja.';
+}
+function powerTick(now){
+  const b=$('#powerBanner'); if(!b)return;
+  const p=config.power;
+  if(!p||!p.enabled||!p.days.includes(now.getDay())||powerState.cancelDate===dstr(now)){b.style.display='none';return}
+  const parts=(p.shutdownTime||'17:30').split(':'); const off=new Date(now); off.setHours(+parts[0]||17,+parts[1]||30,0,0);
+  const diff=off-now, warn=(p.warnMinutes||5)*60000;
+  if(diff>0&&diff<=warn){b.style.display='flex';const s=Math.ceil(diff/1000);$('#powerCd').textContent='mati dalam '+pad(Math.floor(s/60))+':'+pad(s%60)}
+  else b.style.display='none';
+}
+$('#btnPowerCancel').onclick=async()=>{
+  try{const r=await fetch('/api/power/cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({date:dstr(new Date())})});
+    if(!r.ok)throw new Error('server menolak');
+    powerState.cancelDate=dstr(new Date()); $('#powerBanner').style.display='none';
+    toast('✅ Mati otomatis hari ini dibatalkan — agen akan membatalkan hitung mundurnya');
+  }catch(e){toast('⚠️ Gagal membatalkan ('+e.message+') — PC ini sedang offline dari server')}
+};
+
+/* ============ Init ============ */
+config=loadLocal(); tick(); sync();
+if(location.hash==='#admin'){ // Link khusus admin: langsung buka panel, lewati layar aktifkan
+  $('#unlock').style.display='none';
+  setTimeout(()=>$('#btnAdmin').click(),300);
+}
+setInterval(tick,500); setInterval(()=>sync(),30000); setInterval(pollAnnounce,5000); pollAnnounce();
+setInterval(pollPower,15000); pollPower();
+// Mode agen: kalau browser dibuka agen dengan izin suara otomatis, lewati layar "Aktifkan & Mulai" sendiri.
+if(location.hash!=='#admin'){setTimeout(async()=>{try{const ac=ctx();await ac.resume();if(ac.state==='running'&&$('#unlock').style.display!=='none'){$('#unlock').style.display='none';try{wakeLock=await navigator.wakeLock?.request('screen')}catch{} toast('🔔 Bel aktif otomatis — selamat pagi!')}}catch{}},1200)}
+window.addEventListener('online',()=>sync(true)); window.addEventListener('offline',()=>sync());
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
